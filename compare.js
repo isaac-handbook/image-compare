@@ -26,17 +26,22 @@ function hammingDistance(hash1, hash2) {
 //   return num / (Math.sqrt(sq1) * Math.sqrt(sq2));
 // }
 function cosineSimilarity(hash1, hash2) {
-  // hash1 hash2 是bigint，转成数组
   let sampleFingerprint = [];
   let targetFingerprint = [];
-  while (hash1) {
-    sampleFingerprint.unshift(Number(hash1 & 1n));
-    hash1 >>= 1n;
+  if (typeof hash1 === "bigint") {
+    while (hash1) {
+      sampleFingerprint.unshift(Number(hash1 & 1n));
+      hash1 >>= 1n;
+    }
+    while (hash2) {
+      targetFingerprint.unshift(Number(hash2 & 1n));
+      hash2 >>= 1n;
+    }
+  } else {
+    sampleFingerprint = hash1;
+    targetFingerprint = hash2;
   }
-  while (hash2) {
-    targetFingerprint.unshift(Number(hash2 & 1n));
-    hash2 >>= 1n;
-  }
+
   const length = sampleFingerprint.length;
   let innerProduct = 0;
   for (let i = 0; i < length; i++) {
@@ -54,22 +59,24 @@ function cosineSimilarity(hash1, hash2) {
 
 // 计算两张图片的pHash并比较它们
 async function compareImages(file1, file2) {
-  const { phash: phash1 } = await imagePHash(file1);
-  const { phash: phash2 } = await imagePHash(file2);
+  const { phash: phash1, colorFin: colorFin1 } = await imagePHash(file1);
+  const { phash: phash2, colorFin: colorFin2 } = await imagePHash(file2);
 
   const phashDistance = hammingDistance(phash1, phash2);
-  const cosine = cosineSimilarity(phash1, phash2);
+  const cosine_phash = cosineSimilarity(phash1, phash2);
+  const cosine_color = cosineSimilarity(colorFin1, colorFin2);
 
-  return { phashDistance, cosine };
+  return { phashDistance, cosine_phash, cosine_color };
 }
 
 const prefix = "else/";
 
-const p1 = "硫磺火.png";
-const p2 = "狗头1.jpg";
+const p1 = "狗头.png";
+const p2 = "狗头a.png";
 
 compareImages(prefix + p1, prefix + p2).then((distance) => {
   console.log(`${p1} | ${p2}`);
-  console.log(`汉明距离-汉明距离 = ${distance.phashDistance}`);
-  console.log(`汉明距离-预先相似度 = ${distance.cosine}`);
+  console.log(`感知哈希-汉明距离 = ${distance.phashDistance}`);
+  console.log(`感知哈希-余弦相似度 = ${distance.cosine_phash}`);
+  console.log(`颜色分部-余弦相似度 = ${distance.cosine_color}`);
 });

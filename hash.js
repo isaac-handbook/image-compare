@@ -1,6 +1,7 @@
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
+const { getcolorFin } = require("./colorDis");
 
 // DCT函数
 function dctTransform(matrix) {
@@ -110,7 +111,10 @@ async function imagePHash(filePath, needCut = false, color = "#7F7F7F") {
   // 计算感知哈希
   let phash = calculatePHash(dctLowFreq);
 
-  return { phash };
+  // 计算颜色分部指纹
+  const colorFin = getcolorFin(imageData);
+
+  return { phash, colorFin };
 }
 
 // 如果没有 process，则创建一个
@@ -122,6 +126,6 @@ module.exports = {
   imagePHash,
 };
 
-// imagePHash(`items/1.png`).then((res) => {
-//   console.log(res);
-// });
+imagePHash(`items/1.png`).then((res) => {
+  console.log(res);
+});
