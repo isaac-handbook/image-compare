@@ -2,6 +2,9 @@ const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
 const { getcolorFin } = require("./colorDis");
+// const { dctTransform2 } = require("./dct");
+const { dctTransform_fft } = require("./dct_fft");
+const { dctTransform_fast } = require("./dct_fast");
 
 // DCT函数
 function dctTransform(matrix) {
@@ -50,37 +53,41 @@ function calculatePHash(dctLowFreq) {
 }
 
 // 图片转换为感知哈希
-async function imagePHash(filePath, needCut = false, color = "#7F7F7F") {
+async function imageProcess({
+  filePath,
+  bgColor = null,
+  cut = 0,
+  needColorFin = false,
+  grayStage = 3,
+}) {
   const img = await loadImage(filePath);
 
-  let baseSize = 32;
-  if (needCut) {
-    baseSize = 40;
+  let size = 32;
+  if (cut) {
+    size += cut * 2;
   }
-  const imageDataLocation = (baseSize - 32) / 2;
 
-  const canvas = createCanvas(baseSize, baseSize);
+  const location = (size - 32) / 2;
+
+  const canvas = createCanvas(size, size);
   const ctx = canvas.getContext("2d");
 
   // 将图片中所有透明的区域填充
-  ctx.fillStyle = color;
-  ctx.fillRect(0, 0, baseSize, baseSize);
+  if (bgColor) {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, size, size);
+  }
 
   // 缩小尺寸
-  ctx.drawImage(img, 0, 0, baseSize, baseSize);
+  ctx.drawImage(img, 0, 0, size, size);
 
   // 简化色彩
-  const imageData = ctx.getImageData(
-    imageDataLocation,
-    imageDataLocation,
-    32,
-    32
-  ).data;
+  const imageData = ctx.getImageData(location, location, 32, 32).data;
 
   let grayMatrix = new Array(32).fill(0).map(() => new Array(32).fill(0));
   for (let i = 0; i < imageData.length; i += 4) {
     const gray = Math.floor(
-      (imageData[i] + imageData[i + 1] + imageData[i + 2]) / 3
+      (imageData[i] + imageData[i + 1] + imageData[i + 2]) / grayStage
     );
     let row = Math.floor(i / 4 / 32);
     let col = (i / 4) % 32;
@@ -103,7 +110,9 @@ async function imagePHash(filePath, needCut = false, color = "#7F7F7F") {
   );
 
   // 计算DCT
-  let dctMatrix = dctTransform(grayMatrix);
+  // let dctMatrix = dctTransform(grayMatrix);
+  let dctMatrix = dctTransform_fast(grayMatrix);
+  // let dctMatrix = dctTransform_fft(grayMatrix);
 
   // 缩小DCT
   let dctLowFreq = dctMatrix.slice(0, 8).map((row) => row.slice(0, 8));
@@ -112,9 +121,13 @@ async function imagePHash(filePath, needCut = false, color = "#7F7F7F") {
   let phash = calculatePHash(dctLowFreq);
 
   // 计算颜色分部指纹
-  const colorFin = getcolorFin(imageData);
+  let colorFin = [];
 
-  return { phash, colorFin };
+  if (needColorFin) {
+    colorFin = getcolorFin(imageData);
+  }
+
+  return { phash: String(phash), colorFin };
 }
 
 // 如果没有 process，则创建一个
@@ -123,9 +136,9 @@ if (!fs.existsSync(path.join(__dirname, "process"))) {
 }
 
 module.exports = {
-  imagePHash,
+  imageProcess,
 };
 
-imagePHash(`items/1.png`).then((res) => {
+imageProcess({ filePath: `items/1.png`, bgColor: "#7F7F7F" }).then((res) => {
   console.log(res);
 });

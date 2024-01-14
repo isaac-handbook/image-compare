@@ -1,4 +1,4 @@
-const imagePHash = require("./hash").imagePHash;
+const imageProcess = require("./hash").imageProcess;
 
 // 比较两个哈希值并计算汉明距离
 function hammingDistance(hash1, hash2) {
@@ -59,8 +59,8 @@ function cosineSimilarity(hash1, hash2) {
 
 // 计算两张图片的pHash并比较它们
 async function compareImages(file1, file2) {
-  const { phash: phash1, colorFin: colorFin1 } = await imagePHash(file1);
-  const { phash: phash2, colorFin: colorFin2 } = await imagePHash(file2);
+  const { phash: phash1, colorFin: colorFin1 } = await imageProcess(file1);
+  const { phash: phash2, colorFin: colorFin2 } = await imageProcess(file2);
 
   const phashDistance = hammingDistance(phash1, phash2);
   const cosine_phash = cosineSimilarity(phash1, phash2);

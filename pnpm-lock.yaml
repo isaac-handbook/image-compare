@@ -8,6 +8,9 @@ dependencies:
   canvas:
     specifier: ^2.11.2
     version: 2.11.2
+  webfft:
+    specifier: ^1.0.3
+    version: 1.0.3
 
 packages:
 
@@ -397,6 +400,10 @@ packages:
 
   /util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+    dev: false
+
+  /webfft@1.0.3:
+    resolution: {integrity: sha512-Xi9V1yiKuxJvfo9TysWs17C4++7c62KSr1uS9WKj6o3ZMVJdxkoT301qltym0hZxvSU0+8tWuGF1FHNdeP158g==}
     dev: false
 
   /webidl-conversions@3.0.1:
